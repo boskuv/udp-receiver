@@ -8,6 +8,11 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 )
 
+type ServiceNetConnection struct {
+	serviceName string
+	pc          net.PacketConn
+}
+
 var (
 	caster_status = prometheus.NewGaugeVec(
 		prometheus.GaugeOpts{
@@ -23,51 +28,58 @@ func init() {
 }
 
 func main() {
-	ports := []int{8829, 8830} // add more ports here
-	conns, err := listenOnPorts(ports)
+	//ports := []int{8829, 8830} // add more ports here
+	udpServices := make(map[string]int)
+	udpServices["first"] = 8829
+	udpServices["second"] = 8830
+
+	serviceConns, err := listenOnPorts(udpServices)
 	if err != nil {
 		panic(err)
 	}
 	defer func() {
-		for _, conn := range conns {
-			conn.Close()
+		for _, sc := range serviceConns {
+			sc.pc.Close()
 		}
 	}()
-	for i, conn := range conns {
-		go handlePacket(conn, fmt.Sprintf("Service %d", i))
+	for _, sc := range serviceConns {
+		go handlePacket(sc)
 	}
 
 	select {} // TODO: what for?
 }
 
-func listenOnPorts(ports []int) ([]net.PacketConn, error) {
-	var conns []net.PacketConn
-	for _, port := range ports {
+func listenOnPorts(udpServices map[string]int) ([]ServiceNetConnection, error) {
+	var serviceConns []ServiceNetConnection
+	for serviceName, port := range udpServices {
 		addr := fmt.Sprintf(":%d", port)
 		conn, err := net.ListenPacket("udp4", addr)
 		if err != nil {
 			return nil, err
 		}
-		conns = append(conns, conn) // TODO: slice?
+		serviceConns = append(serviceConns, ServiceNetConnection{
+			serviceName: serviceName,
+			pc:          conn,
+		}) // TODO: slice?
 	}
-	return conns, nil
+	return serviceConns, nil
 }
 
-func handlePacket(pc net.PacketConn, serviceName string) {
+func handlePacket(sc ServiceNetConnection) {
 	buf := make([]byte, 1024) // TODO: check size
 
 	//lastReceived := time.Now()
 	wasPacketReceived := false
 
 	for {
-		pc.SetReadDeadline(time.Now().Add(5 * time.Second)) // TODO: cfg parameter
-		n, _, err := pc.ReadFrom(buf)
+		sc.pc.SetReadDeadline(time.Now().Add(5 * time.Second)) // TODO: cfg parameter
+		n, _, err := sc.pc.ReadFrom(buf)
 		if err == nil {
 			fmt.Printf("UDP packet was received: %s\n", buf[:n])
 			wasPacketReceived = true
 		}
 
-		Prom(wasPacketReceived, serviceName)
+		Prom(wasPacketReceived, sc.serviceName)
 
 	}
 }
