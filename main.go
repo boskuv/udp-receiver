@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"net"
+	"sync"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -23,6 +24,8 @@ var (
 	)
 )
 
+var mutex sync.Mutex
+
 func init() {
 	prometheus.MustRegister(caster_status)
 }
@@ -42,11 +45,14 @@ func main() {
 			sc.pc.Close()
 		}
 	}()
-	for _, sc := range serviceConns {
-		go handlePacket(sc)
-	}
 
-	select {} // TODO: what for?
+	for {
+		for _, sc := range serviceConns {
+			go handlePacket(sc)
+		}
+
+		select {} // TODO: what for?
+	}
 }
 
 func listenOnPorts(udpServices map[string]int) ([]ServiceNetConnection, error) {
@@ -71,24 +77,30 @@ func handlePacket(sc ServiceNetConnection) {
 	//lastReceived := time.Now()
 	wasPacketReceived := false
 
-	for {
-		sc.pc.SetReadDeadline(time.Now().Add(5 * time.Second)) // TODO: cfg parameter
-		n, _, err := sc.pc.ReadFrom(buf)
-		if err == nil {
-			fmt.Printf("UDP packet was received: %s\n", buf[:n])
-			wasPacketReceived = true
-		}
-
-		Prom(wasPacketReceived, sc.serviceName)
-
+	//for {
+	sc.pc.SetReadDeadline(time.Now().Add(5 * time.Second)) // TODO: cfg parameter
+	n, _, err := sc.pc.ReadFrom(buf)
+	if err == nil {
+		fmt.Printf("UDP packet was received: %s\n", buf[:n])
+		wasPacketReceived = true
 	}
+
+	Prom(wasPacketReceived, sc.serviceName)
+
+	//}
 }
 
 func Prom(wasPacketReceived bool, serviceName string) {
+
+	mutex.Lock()
+
 	if wasPacketReceived {
 		caster_status.WithLabelValues(serviceName).Set(1)
 	} else {
 		caster_status.WithLabelValues(serviceName).Set(0)
 	}
-	time.Sleep(time.Second * 5)
+
+	defer mutex.Unlock()
+
+	time.Sleep(time.Second * 1)
 }
