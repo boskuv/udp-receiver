@@ -23,24 +23,6 @@ func init() {
 }
 
 func main() {
-
-	// pc1, err := net.ListenPacket("udp4", ":8829")
-
-	// if err != nil {
-	// 	panic(err)
-	// }
-
-	// pc2, err := net.ListenPacket("udp4", ":8830")
-
-	// if err != nil {
-	// 	panic(err)
-	// }
-
-	// defer pc1.Close()
-	// defer pc2.Close()
-
-	// go handlePacket(pc1, "")
-	// go handlePacket(pc2, "")
 	ports := []int{8829, 8830} // add more ports here
 	conns, err := listenOnPorts(ports)
 	if err != nil {
