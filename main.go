@@ -50,7 +50,7 @@ func main() {
 	}()
 
 	statusChan := make(chan ServiceNetStatus) // check cap and len, 2
-	go handlePacket(serviceConns, statusChan)
+	handlePacket(serviceConns, statusChan)
 
 	for {
 		select {
@@ -85,28 +85,27 @@ func listenOnPorts(udpServices map[string]int) ([]ServiceNetConnection, error) {
 func handlePacket(serviceConns []ServiceNetConnection, statusChan chan ServiceNetStatus) {
 	buf := make([]byte, 1024) // TODO: check len and cap
 
-	// TODO: sleep
-	for {
+	//for {
 
-		time.Sleep(time.Second) // TODO: cfg parameter
+	time.Sleep(time.Second) // TODO: cfg parameter
 
-		for _, sc := range serviceConns {
+	for _, sc := range serviceConns {
 
-			sc.pc.SetReadDeadline(time.Now().Add(5 * time.Second)) // TODO: cfg parameter
-			n, _, err := sc.pc.ReadFrom(buf)
-
-			if err == nil {
-				fmt.Printf("UDP packet was received: %s\n", buf[:n]) // TODO: remove
-				statusChan <- ServiceNetStatus{serviceName: sc.serviceName, status: 1}
-				fmt.Println(time.Now().String(), "serviceName: ", sc.serviceName, "status: ", 0)
-				continue
+		go func(conn ServiceNetConnection) {
+			for {
+				conn.pc.SetReadDeadline(time.Now().Add(5 * time.Second))
+				n, _, err := conn.pc.ReadFrom(buf)
+				if err == nil {
+					fmt.Printf("UDP packet was received: %s\n", buf[:n])
+					statusChan <- ServiceNetStatus{serviceName: conn.serviceName, status: 1}
+				} else {
+					statusChan <- ServiceNetStatus{serviceName: conn.serviceName, status: 0}
+				}
 			}
-			// TODO: else
-			statusChan <- ServiceNetStatus{serviceName: sc.serviceName, status: 0}
-
-		}
-
+		}(sc)
 	}
+
+	//}
 }
 
 func ExportToProm(srv ServiceNetStatus) {
