@@ -47,8 +47,10 @@ func main() {
 	}()
 
 	for {
+		scChan := make(chan ServiceNetConnection)
 		for _, sc := range serviceConns {
-			go handlePacket(sc)
+			scChan <- sc
+			go handlePacket(scChan)
 		}
 
 		select {} // TODO: what for?
@@ -71,10 +73,11 @@ func listenOnPorts(udpServices map[string]int) ([]ServiceNetConnection, error) {
 	return serviceConns, nil
 }
 
-func handlePacket(sc ServiceNetConnection) {
+func handlePacket(scChan chan ServiceNetConnection) { //sc ServiceNetConnection) {
 	buf := make([]byte, 1024) // TODO: check size
 
-	//lastReceived := time.Now()
+	//var sc ServiceNetConnection
+	sc := <-scChan
 	wasPacketReceived := false
 
 	//for {
