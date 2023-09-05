@@ -49,16 +49,16 @@ func main() {
 		}
 	}()
 
-	statusChan := make(chan ServiceNetStatus, 100) // check cap and len
+	statusChan := make(chan ServiceNetStatus) // check cap and len, 2
 	go handlePacket(serviceConns, statusChan)
 
 	for {
 		select {
 		case currentServiceStatus := <-statusChan:
-			fmt.Println(time.Now().String(), " | Received result:", currentServiceStatus)
+			fmt.Println(time.Now().String(), " | Received result:", currentServiceStatus, " | chan cap/len: ", cap(statusChan), "/", len(statusChan))
 			ExportToProm(currentServiceStatus)
 		default:
-			fmt.Println("No result yet, continuing...")
+			//fmt.Println("No result yet, continuing...")
 			time.Sleep(time.Second)
 		}
 	}
@@ -87,6 +87,8 @@ func handlePacket(serviceConns []ServiceNetConnection, statusChan chan ServiceNe
 
 	// TODO: sleep
 	for {
+
+		time.Sleep(time.Second) // TODO: cfg parameter
 
 		for _, sc := range serviceConns {
 
