@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"net"
-	"sync"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -14,17 +13,20 @@ type ServiceNetConnection struct {
 	pc          net.PacketConn
 }
 
+type ServiceNetStatus struct {
+	serviceName string
+	status      float64
+}
+
 var (
 	caster_status = prometheus.NewGaugeVec(
 		prometheus.GaugeOpts{
 			Name: "job_caster",
 			Help: "Location connections number",
 		},
-		[]string{"caster_status"},
+		[]string{"caster_status"}, // TODO: rename
 	)
 )
-
-var mutex sync.Mutex
 
 func init() {
 	prometheus.MustRegister(caster_status)
@@ -40,21 +42,28 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+
 	defer func() {
 		for _, sc := range serviceConns {
 			sc.pc.Close()
 		}
 	}()
 
-	for {
-		scChan := make(chan ServiceNetConnection)
-		for _, sc := range serviceConns {
-			scChan <- sc
-			go handlePacket(scChan)
-		}
+	statusChan := make(chan ServiceNetStatus, 100) // check cap and len
+	go handlePacket(serviceConns, statusChan)
 
-		select {} // TODO: what for?
+	for {
+		select {
+		case currentServiceStatus := <-statusChan:
+			fmt.Println(time.Now().String(), " | Received result:", currentServiceStatus)
+			ExportToProm(currentServiceStatus)
+		default:
+			fmt.Println("No result yet, continuing...")
+			time.Sleep(time.Second)
+		}
 	}
+
+	//select {} // TODO: what for?
 }
 
 func listenOnPorts(udpServices map[string]int) ([]ServiceNetConnection, error) {
@@ -73,37 +82,31 @@ func listenOnPorts(udpServices map[string]int) ([]ServiceNetConnection, error) {
 	return serviceConns, nil
 }
 
-func handlePacket(scChan chan ServiceNetConnection) { //sc ServiceNetConnection) {
-	buf := make([]byte, 1024) // TODO: check size
+func handlePacket(serviceConns []ServiceNetConnection, statusChan chan ServiceNetStatus) {
+	buf := make([]byte, 1024) // TODO: check len and cap
 
-	//var sc ServiceNetConnection
-	sc := <-scChan
-	wasPacketReceived := false
+	// TODO: sleep
+	for {
 
-	//for {
-	sc.pc.SetReadDeadline(time.Now().Add(5 * time.Second)) // TODO: cfg parameter
-	n, _, err := sc.pc.ReadFrom(buf)
-	if err == nil {
-		fmt.Printf("UDP packet was received: %s\n", buf[:n])
-		wasPacketReceived = true
+		for _, sc := range serviceConns {
+
+			sc.pc.SetReadDeadline(time.Now().Add(5 * time.Second)) // TODO: cfg parameter
+			n, _, err := sc.pc.ReadFrom(buf)
+
+			if err == nil {
+				fmt.Printf("UDP packet was received: %s\n", buf[:n]) // TODO: remove
+				statusChan <- ServiceNetStatus{serviceName: sc.serviceName, status: 1}
+				fmt.Println(time.Now().String(), "serviceName: ", sc.serviceName, "status: ", 0)
+				continue
+			}
+			// TODO: else
+			statusChan <- ServiceNetStatus{serviceName: sc.serviceName, status: 0}
+
+		}
+
 	}
-
-	Prom(wasPacketReceived, sc.serviceName)
-
-	//}
 }
 
-func Prom(wasPacketReceived bool, serviceName string) {
-
-	mutex.Lock()
-
-	if wasPacketReceived {
-		caster_status.WithLabelValues(serviceName).Set(1)
-	} else {
-		caster_status.WithLabelValues(serviceName).Set(0)
-	}
-
-	defer mutex.Unlock()
-
-	time.Sleep(time.Second * 1)
+func ExportToProm(srv ServiceNetStatus) {
+	caster_status.WithLabelValues(srv.serviceName).Set(srv.status)
 }
