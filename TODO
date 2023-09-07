@@ -1,4 +1,3 @@
-config
-proj structure
 run as service
 refactor: naming
+prom exporter on custom port (from config)
