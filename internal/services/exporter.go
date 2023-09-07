@@ -8,7 +8,7 @@ var (
 			Name: "job_caster",
 			Help: "Location connections number",
 		},
-		[]string{"caster_status"}, // TODO: cfg parameter
+		[]string{"caster_status"},
 	)
 )
 

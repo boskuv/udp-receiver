@@ -4,14 +4,12 @@ import (
 	"fmt"
 	"time"
 
+	"udp-receiver/internal/config"
 	"udp-receiver/internal/services"
 )
 
-func Run() {
-	//ports := []int{8829, 8830} // add more ports here
-	udpServices := make(map[string]int)
-	udpServices["first"] = 8829
-	udpServices["second"] = 8830
+func Run(cfg *config.Config) { // TODO: pointer?
+	udpServices := cfg.Services
 
 	serviceConns, err := services.ListenOnPorts(udpServices)
 	if err != nil {
@@ -24,8 +22,8 @@ func Run() {
 		}
 	}()
 
-	statusChan := make(chan services.ServiceNetStatus) // check cap and len, 2
-	services.HandlePacket(serviceConns, statusChan)
+	statusChan := make(chan services.ServiceNetStatus) // TODO: check cap and len (for example 2)
+	services.HandlePacket(cfg.SleepTimeSec, cfg.AnswerTimeoutSec, serviceConns, statusChan)
 
 	for {
 		select {

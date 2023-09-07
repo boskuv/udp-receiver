@@ -27,16 +27,16 @@ func ListenOnPorts(udpServices map[string]int) ([]ServiceNetConnection, error) {
 	return serviceConns, nil
 }
 
-func HandlePacket(serviceConns []ServiceNetConnection, statusChan chan ServiceNetStatus) {
+func HandlePacket(SleepTimeSec int, AnswerTimeoutSec int, serviceConns []ServiceNetConnection, statusChan chan ServiceNetStatus) {
 	buf := make([]byte, 1024) // TODO: check len and cap
 
-	time.Sleep(time.Second) // TODO: cfg parameter
+	time.Sleep(time.Duration(SleepTimeSec))
 
 	for _, sc := range serviceConns {
 
 		go func(conn ServiceNetConnection) {
 			for {
-				conn.PacketConn.SetReadDeadline(time.Now().Add(5 * time.Second))
+				conn.PacketConn.SetReadDeadline(time.Now().Add(time.Duration(AnswerTimeoutSec) * time.Second))
 				n, _, err := conn.PacketConn.ReadFrom(buf)
 				if err == nil {
 					fmt.Printf("UDP packet was received: %s\n", buf[:n])
