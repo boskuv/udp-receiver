@@ -18,7 +18,7 @@ type Config struct {
 // NewConfig returns a new decoded Config struct
 func NewConfig(configPath string) (*Config, error) {
 	// Create config structure
-	config := &Config{}
+	config := &Config{map[string]int{"test_service": 8789}, 1, 5}
 
 	// Open config file
 	file, err := os.Open(configPath)
