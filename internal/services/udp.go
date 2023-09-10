@@ -37,15 +37,20 @@ func HandlePacket(SleepTimeSec int, AnswerTimeoutSec int, serviceConns []Service
 		serviceConn := sc // TODO: check
 
 		go func(conn *ServiceNetConnection) {
+			var serviceStatus float64
+
 			for {
 				conn.PacketConn.SetReadDeadline(time.Now().Add(time.Duration(AnswerTimeoutSec) * time.Second))
 				_, _, err := conn.PacketConn.ReadFrom(dataBuffer)
+
 				if err == nil {
 					fmt.Printf("UDP packet was received")
-					statusChan <- ServiceNetStatus{ServiceName: conn.serviceName, Status: 1}
-				} else {
-					statusChan <- ServiceNetStatus{ServiceName: conn.serviceName, Status: 0}
+					serviceStatus = 1
+					continue
 				}
+
+				serviceStatus = 0
+				statusChan <- ServiceNetStatus{ServiceName: conn.serviceName, Status: serviceStatus}
 			}
 		}(&serviceConn)
 	}
