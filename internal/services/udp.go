@@ -17,7 +17,7 @@ func ListenOnPorts(udpServices map[string]int) ([]ServiceNetConnection, error) {
 		addr := fmt.Sprintf(":%d", port)
 		conn, err := net.ListenPacket("udp4", addr)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("ListenOnPorts(..) to service %s: %w", serviceName, err)
 		}
 		serviceConns = append(serviceConns, ServiceNetConnection{
 			serviceName: serviceName,

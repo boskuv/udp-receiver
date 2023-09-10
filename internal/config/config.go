@@ -1,6 +1,7 @@
 package config
 
 import (
+	"errors"
 	"flag"
 	"fmt"
 	"os"
@@ -23,7 +24,7 @@ func NewConfig(configPath string) (*Config, error) {
 	// Open config file
 	file, err := os.Open(configPath)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("os.Open(%q): %w", configPath, err)
 	}
 	defer file.Close()
 
@@ -32,7 +33,7 @@ func NewConfig(configPath string) (*Config, error) {
 
 	// Start YAML decoding from file
 	if err := d.Decode(&config); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("yaml.NewDecoder(..).Decode(..): %w", err)
 	}
 
 	return config, nil
@@ -43,10 +44,11 @@ func NewConfig(configPath string) (*Config, error) {
 func ValidateConfigPath(path string) error {
 	s, err := os.Stat(path)
 	if err != nil {
-		return err
+		return fmt.Errorf("ValidateConfigPath(%s): %w", path, err)
 	}
 	if s.IsDir() {
-		return fmt.Errorf("'%s' is a directory, not a normal file", path)
+		var ErrIsDir = errors.New("it's a directory, not a file")
+		return fmt.Errorf("%w: %s", ErrIsDir, path)
 	}
 	return nil
 }
