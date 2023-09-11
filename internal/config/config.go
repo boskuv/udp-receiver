@@ -11,6 +11,7 @@ import (
 
 // Config struct for webapp config
 type Config struct {
+	PromAddr         string         `yaml:"promAddr"`
 	Services         map[string]int `yaml:"services"`
 	SleepTimeSec     int            `yaml:"sleepTimeSec"`
 	AnswerTimeoutSec int            `yaml:"answerTimeoutSec"`
@@ -19,7 +20,7 @@ type Config struct {
 // NewConfig returns a new decoded Config struct
 func NewConfig(configPath string) (*Config, error) {
 	// Create config structure
-	config := &Config{map[string]int{"test_service": 8789}, 1, 5}
+	config := &Config{}
 
 	// Open config file
 	file, err := os.Open(configPath)

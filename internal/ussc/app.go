@@ -2,10 +2,13 @@ package app
 
 import (
 	"fmt"
+	"net/http"
 	"time"
 
 	"udp-receiver/internal/config"
 	"udp-receiver/internal/services"
+
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 func Run(cfg *config.Config) { // TODO: pointer?
@@ -19,6 +22,17 @@ func Run(cfg *config.Config) { // TODO: pointer?
 	defer func() {
 		for _, sc := range serviceConns {
 			sc.PacketConn.Close()
+		}
+	}()
+
+	http.Handle("/metrics", promhttp.Handler())
+	//addr := "localhost:8080"
+	//log.Printf("Starting web server at %s\n", *addr)
+
+	go func() {
+		err := http.ListenAndServe(cfg.PromAddr, nil)
+		if err != nil {
+			panic(err)
 		}
 	}()
 

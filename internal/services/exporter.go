@@ -1,6 +1,8 @@
 package services
 
-import "github.com/prometheus/client_golang/prometheus"
+import (
+	"github.com/prometheus/client_golang/prometheus"
+)
 
 var (
 	caster_status = prometheus.NewGaugeVec(
