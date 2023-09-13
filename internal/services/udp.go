@@ -30,8 +30,6 @@ func ListenOnPorts(udpServices map[string]int) ([]ServiceNetConnection, error) {
 func HandlePacket(SleepTimeSec int, AnswerTimeoutSec int, serviceConns []ServiceNetConnection, statusChan chan ServiceNetStatus) {
 	dataBuffer := make([]byte, 1024)
 
-	time.Sleep(time.Duration(SleepTimeSec))
-
 	for _, sc := range serviceConns {
 
 		serviceConn := sc // TODO: check
@@ -43,14 +41,15 @@ func HandlePacket(SleepTimeSec int, AnswerTimeoutSec int, serviceConns []Service
 				conn.PacketConn.SetReadDeadline(time.Now().Add(time.Duration(AnswerTimeoutSec) * time.Second))
 				_, _, err := conn.PacketConn.ReadFrom(dataBuffer)
 
+				serviceStatus = 0
+
 				if err == nil {
-					fmt.Printf("UDP packet was received")
 					serviceStatus = 1
-					continue
 				}
 
-				serviceStatus = 0
 				statusChan <- ServiceNetStatus{ServiceName: conn.serviceName, Status: serviceStatus}
+
+				time.Sleep(time.Duration(SleepTimeSec))
 			}
 		}(&serviceConn)
 	}
