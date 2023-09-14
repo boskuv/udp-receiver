@@ -49,7 +49,7 @@ func HandlePacket(SleepTimeSec int, AnswerTimeoutSec int, serviceConns []Service
 
 				statusChan <- ServiceNetStatus{ServiceName: conn.serviceName, Status: serviceStatus}
 
-				time.Sleep(time.Duration(SleepTimeSec))
+				time.Sleep(time.Duration(SleepTimeSec) * time.Second)
 			}
 		}(&serviceConn)
 	}

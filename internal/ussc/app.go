@@ -26,8 +26,6 @@ func Run(cfg *config.Config) { // TODO: pointer?
 	}()
 
 	http.Handle("/metrics", promhttp.Handler())
-	//addr := "localhost:8080"
-	//log.Printf("Starting web server at %s\n", *addr)
 
 	go func() {
 		err := http.ListenAndServe(cfg.PromAddr, nil)
@@ -36,7 +34,7 @@ func Run(cfg *config.Config) { // TODO: pointer?
 		}
 	}()
 
-	statusChan := make(chan services.ServiceNetStatus) // TODO: check cap and len (for example 2)
+	statusChan := make(chan services.ServiceNetStatus, 3)
 	services.HandlePacket(cfg.SleepTimeSec, cfg.AnswerTimeoutSec, serviceConns, statusChan)
 
 	for {
