@@ -34,7 +34,7 @@ func Run(cfg *config.Config) {
 		}
 	}()
 
-	statusChan := make(chan services.ServiceNetStatus, 3)
+	statusChan := make(chan services.ServiceNetStatus, len(cfg.Services))
 	services.HandlePacket(cfg.SleepTimeSec, cfg.AnswerTimeoutSec, &serviceConns, statusChan)
 
 	for {
