@@ -27,10 +27,10 @@ func ListenOnPorts(udpServices map[string]int) ([]ServiceNetConnection, error) {
 	return serviceConns, nil
 }
 
-func HandlePacket(SleepTimeSec int, AnswerTimeoutSec int, serviceConns []ServiceNetConnection, statusChan chan ServiceNetStatus) {
+func HandlePacket(SleepTimeSec int, AnswerTimeoutSec int, serviceConns *[]ServiceNetConnection, statusChan chan ServiceNetStatus) {
 	dataBuffer := make([]byte, 1024)
 
-	for _, sc := range serviceConns {
+	for _, sc := range *serviceConns {
 
 		serviceConn := sc // TODO: check
 
