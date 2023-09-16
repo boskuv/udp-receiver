@@ -10,7 +10,7 @@ var (
 			Name: "job_caster",
 			Help: "Location connections number",
 		},
-		[]string{"caster_status"},
+		[]string{"service_name"},
 	)
 )
 
