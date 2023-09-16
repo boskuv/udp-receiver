@@ -22,7 +22,7 @@ func ListenOnPorts(udpServices map[string]int) ([]ServiceNetConnection, error) {
 		serviceConns = append(serviceConns, ServiceNetConnection{
 			serviceName: serviceName,
 			PacketConn:  conn,
-		}) // TODO: slice?
+		})
 	}
 	return serviceConns, nil
 }

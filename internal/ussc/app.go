@@ -11,7 +11,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
-func Run(cfg *config.Config) { // TODO: pointer?
+func Run(cfg *config.Config) {
 	udpServices := cfg.Services
 
 	serviceConns, err := services.ListenOnPorts(udpServices)

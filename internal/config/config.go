@@ -62,7 +62,7 @@ func ParseFlags() (string, error) {
 
 	// Set up a CLI flag called "-config" to allow users
 	// to supply the configuration file
-	flag.StringVar(&configPath, "config", "./config.yml", "path to config file") // TODO: get path from root directory
+	flag.StringVar(&configPath, "config", "./config.yml", "path to config file")
 
 	// Actually parse the flags
 	flag.Parse()
