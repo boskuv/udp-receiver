@@ -3,43 +3,64 @@ package services
 import (
 	"fmt"
 	"net"
+	"syscall"
 	"time"
 )
 
 type ServiceNetConnection struct {
 	serviceName string
-	PacketConn  net.PacketConn
+	PacketConn  net.UDPConn
 }
 
-func ListenOnPorts(udpServices map[string]int) ([]ServiceNetConnection, error) {
+func ListenOnPorts(udpServices map[string]int, AnswerTimeoutSec int) (*[]ServiceNetConnection, error) {
 	var serviceConns []ServiceNetConnection
 	for serviceName, port := range udpServices {
-		addr := fmt.Sprintf(":%d", port)
-		conn, err := net.ListenPacket("udp4", addr)
-		if err != nil {
-			return nil, fmt.Errorf("ListenOnPorts(..) to service %s: %w", serviceName, err)
+
+		addr := &net.UDPAddr{
+			IP:   net.ParseIP("0.0.0.0"),
+			Port: port,
 		}
+
+		conn, err := net.ListenUDP("udp", addr)
+		if err != nil {
+			return nil, fmt.Errorf("ListenOnPorts(..)->net.ListenUDP(..) to service %s: %w", serviceName, err)
+		}
+
+		fd, err := conn.File()
+		if err != nil {
+			return nil, fmt.Errorf("ListenOnPorts(..) Error getting file descriptor in service %s: %w", serviceName, err)
+		}
+
+		err = syscall.SetsockoptInt(int(fd.Fd()), syscall.SOL_SOCKET, syscall.SO_REUSEADDR, 1)
+		if err != nil {
+			return nil, fmt.Errorf("ListenOnPorts(..) Error setting SO_REUSEPORT option in service %s: %w", serviceName, err)
+		}
+		fd.Close()
+
+		defer conn.Close()
+
+		conn.SetReadDeadline(time.Now().Add(time.Duration(AnswerTimeoutSec) * time.Second))
+
 		serviceConns = append(serviceConns, ServiceNetConnection{
 			serviceName: serviceName,
-			PacketConn:  conn,
+			PacketConn:  *conn,
 		})
 	}
-	return serviceConns, nil
+	return &serviceConns, nil
 }
 
-func HandlePacket(SleepTimeSec int, AnswerTimeoutSec int, serviceConns *[]ServiceNetConnection, statusChan chan ServiceNetStatus) {
+func HandlePacket(SleepTimeSec int, serviceConns *[]ServiceNetConnection, statusChan chan ServiceNetStatus) {
 	dataBuffer := make([]byte, 1024)
 
 	for _, sc := range *serviceConns {
 
-		serviceConn := sc // TODO: check
+		serviceConn := sc
 
 		go func(conn *ServiceNetConnection) {
 			var serviceStatus float64
 
 			for {
-				conn.PacketConn.SetReadDeadline(time.Now().Add(time.Duration(AnswerTimeoutSec) * time.Second))
-				_, _, err := conn.PacketConn.ReadFrom(dataBuffer)
+				_, _, err := conn.PacketConn.ReadFromUDP(dataBuffer)
 
 				serviceStatus = 0
 

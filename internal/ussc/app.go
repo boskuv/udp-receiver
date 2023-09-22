@@ -14,13 +14,13 @@ import (
 func Run(cfg *config.Config) {
 	udpServices := cfg.Services
 
-	serviceConns, err := services.ListenOnPorts(udpServices)
+	serviceConns, err := services.ListenOnPorts(udpServices, cfg.AnswerTimeoutSec)
 	if err != nil {
 		panic(err)
 	}
 
 	defer func() {
-		for _, sc := range serviceConns {
+		for _, sc := range *serviceConns {
 			sc.PacketConn.Close()
 		}
 	}()
@@ -35,7 +35,7 @@ func Run(cfg *config.Config) {
 	}()
 
 	statusChan := make(chan services.ServiceNetStatus, len(cfg.Services))
-	services.HandlePacket(cfg.SleepTimeSec, cfg.AnswerTimeoutSec, &serviceConns, statusChan)
+	services.HandlePacket(cfg.SleepTimeSec, serviceConns, statusChan)
 
 	for {
 		select {
