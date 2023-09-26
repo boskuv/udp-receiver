@@ -24,8 +24,6 @@ func ListenOnPorts(udpServices map[string]int, AnswerTimeoutSec int) (*[]Service
 			return nil, fmt.Errorf("ListenOnPorts(..)->reuseport.ListenPacket(..) to service %s: %w", serviceName, err)
 		}
 
-		conn.SetReadDeadline(time.Now().Add(time.Duration(AnswerTimeoutSec) * time.Second))
-
 		serviceConns = append(serviceConns, ServiceNetConnection{
 			serviceName: serviceName,
 			PacketConn:  conn,
@@ -45,6 +43,7 @@ func HandlePacket(SleepTimeSec int, serviceConns *[]ServiceNetConnection, status
 			var serviceStatus float64
 
 			for {
+				conn.PacketConn.SetReadDeadline(time.Now().Add(time.Duration(30) * time.Second))
 				_, _, err := conn.PacketConn.ReadFrom(dataBuffer)
 
 				serviceStatus = 0

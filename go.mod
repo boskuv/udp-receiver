@@ -3,6 +3,7 @@ module udp-receiver
 go 1.21.0
 
 require (
+	github.com/libp2p/go-reuseport v0.4.0
 	github.com/prometheus/client_golang v1.16.0
 	gopkg.in/yaml.v2 v2.4.0
 )
@@ -12,7 +13,6 @@ require (
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
 	github.com/golang/protobuf v1.5.3 // indirect
 	github.com/kr/text v0.2.0 // indirect
-	github.com/libp2p/go-reuseport v0.4.0 // indirect
 	github.com/matttproud/golang_protobuf_extensions v1.0.4 // indirect
 	github.com/prometheus/client_model v0.3.0 // indirect
 	github.com/prometheus/common v0.42.0 // indirect
