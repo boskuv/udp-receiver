@@ -9,12 +9,29 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-// Config struct for webapp config
+// Config represents the application configuration
 type Config struct {
 	PromAddr         string         `yaml:"promAddr"`
 	Services         map[string]int `yaml:"services"`
 	SleepTimeSec     int            `yaml:"sleepTimeSec"`
 	AnswerTimeoutSec int            `yaml:"answerTimeoutSec"`
+}
+
+// Validate validates the configuration
+func (c *Config) Validate() error {
+	if c.PromAddr == "" {
+		return fmt.Errorf("promAddr is required")
+	}
+	if len(c.Services) == 0 {
+		return fmt.Errorf("at least one service must be configured")
+	}
+	if c.SleepTimeSec <= 0 {
+		return fmt.Errorf("sleepTimeSec must be greater than 0")
+	}
+	if c.AnswerTimeoutSec <= 0 {
+		return fmt.Errorf("answerTimeoutSec must be greater than 0")
+	}
+	return nil
 }
 
 // NewConfig returns a new decoded Config struct
@@ -35,6 +52,11 @@ func NewConfig(configPath string) (*Config, error) {
 	// Start YAML decoding from file
 	if err := d.Decode(&config); err != nil {
 		return nil, fmt.Errorf("yaml.NewDecoder(..).Decode(..): %w", err)
+	}
+
+	// Validate configuration
+	if err := config.Validate(); err != nil {
+		return nil, fmt.Errorf("invalid configuration: %w", err)
 	}
 
 	return config, nil

@@ -5,24 +5,26 @@ import (
 )
 
 var (
-	caster_status = prometheus.NewGaugeVec(
+	serviceStatusGauge = prometheus.NewGaugeVec(
 		prometheus.GaugeOpts{
-			Name: "job_caster",
-			Help: "Location connections number",
+			Name: "udp_service_status",
+			Help: "UDP service connection status (1 = connected, 0 = disconnected)",
 		},
 		[]string{"service_name"},
 	)
 )
 
+// ServiceNetStatus represents the network status of a service
 type ServiceNetStatus struct {
 	ServiceName string
 	Status      float64
 }
 
 func init() {
-	prometheus.MustRegister(caster_status)
+	prometheus.MustRegister(serviceStatusGauge)
 }
 
+// ExportToProm exports the service status to Prometheus
 func ExportToProm(srv ServiceNetStatus) {
-	caster_status.WithLabelValues(srv.ServiceName).Set(srv.Status)
+	serviceStatusGauge.WithLabelValues(srv.ServiceName).Set(srv.Status)
 }
