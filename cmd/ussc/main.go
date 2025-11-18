@@ -4,8 +4,9 @@ import (
 	"log"
 	"os"
 
-	"udp-receiver/internal/config"
-	app "udp-receiver/internal/ussc"
+	app "github.com/boskuv/udp-receiver/internal/ussc"
+
+	"github.com/boskuv/udp-receiver/internal/config"
 )
 
 func main() {

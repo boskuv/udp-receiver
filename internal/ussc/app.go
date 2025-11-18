@@ -10,8 +10,8 @@ import (
 	"syscall"
 	"time"
 
-	"udp-receiver/internal/config"
-	"udp-receiver/internal/services"
+	"github.com/boskuv/udp-receiver/internal/config"
+	"github.com/boskuv/udp-receiver/internal/services"
 
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )

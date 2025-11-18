@@ -1,4 +1,4 @@
-module udp-receiver
+module github.com/boskuv/udp-receiver
 
 go 1.21.0
 
