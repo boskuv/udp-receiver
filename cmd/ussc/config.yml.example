@@ -1,0 +1,6 @@
+promAddr: :8080
+services:
+    first: 8830
+    second: 8831
+sleepTimeSec: 1
+answerTimeoutSec: 5
